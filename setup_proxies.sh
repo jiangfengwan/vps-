@@ -24,6 +24,11 @@ fi
 # 生成UUID
 REALITY_UUID=$(cat /proc/sys/kernel/random/uuid)
 
+# 生成Reality的私钥和公钥
+REALITY_KEYS=$(xray x25519)
+REALITY_PRIVATE_KEY=$(echo "$REALITY_KEYS" | grep "Private key:" | awk '{print $3}')
+REALITY_PUBLIC_KEY=$(echo "$REALITY_KEYS" | grep "Public key:" | awk '{print $3}')
+
 # 提示用户输入必要信息
 read -p "请输入Hysteria代理的认证密码: " HYSTERIA_PASSWORD
 read -p "请输入Hysteria服务器的IP地址: " HYSTERIA_SERVER_IP
@@ -35,15 +40,14 @@ read -p "请输入Hysteria代理的下载速度 (Mbps): " HYSTERIA_DOWN_MBPS
 read -p "请输入Reality服务器的IP地址: " REALITY_SERVER_IP
 read -p "请输入Reality服务器的端口号 (默认7898): " REALITY_SERVER_PORT
 REALITY_SERVER_PORT=${REALITY_SERVER_PORT:-7898}
-read -p "请输入Reality代理的私钥: " REALITY_PRIVATE_KEY
 read -p "请输入Reality代理的SNI主机名: " REALITY_SNI
 
 # 生成Hysteria配置文件
 cat <<EOF > /etc/hysteria_config.json
 {
   "listen": ":$HYSTERIA_SERVER_PORT",
-  "cert": "path/to/cert.crt",
-  "key": "path/to/private.key",
+  "cert": "/etc/letsencrypt/live/your-domain/fullchain.pem",
+  "key": "/etc/letsencrypt/live/your-domain/privkey.pem",
   "up_mbps": $HYSTERIA_UP_MBPS,
   "down_mbps": $HYSTERIA_DOWN_MBPS,
   "obfs": "password",
@@ -133,3 +137,4 @@ systemctl start xray
 
 echo "Hysteria 和 Reality 代理已启动"
 echo "Reality UUID: $REALITY_UUID"
+echo "Reality Public Key: $REALITY_PUBLIC_KEY"
